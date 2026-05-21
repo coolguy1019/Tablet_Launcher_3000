@@ -17,8 +17,8 @@ def cam_center(img,width,height,draw=True,color=(0,0,0), thickness = 1):#draws c
 
 
 def centolipdist(center, lip, dis = False):
-    del_x = abs(center[0] - lip[0])
-    del_y = abs(center[1] - lip[1])
+    del_x = -(center[0] - lip[0]) #to make it according to the cartesian system.. forgot to update before.
+    del_y = (center[1] - lip[1])
     dist = sqrt((del_x**2) + (del_y**2))
     if dis:
         return dist
