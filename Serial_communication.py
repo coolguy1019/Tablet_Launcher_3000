@@ -1,3 +1,5 @@
+import struct
+
 import serial.tools.list_ports as port
 import time
 import serial
@@ -20,9 +22,10 @@ class COMMUNICATION:
 
 
 
-    def serialOutput(self,x_coord, y_coord, sleeptime = 0.1):
+    def serialOutput(self,x_coord, y_coord, openess,sleeptime = 0.1):
         if self.ser is not None:
-            self.ser.write(f'{x_coord},{y_coord})'.encode()) #output format is "x,y)"
+            binarydata = struct.pack('<BhhB',255,x_coord,y_coord,openess)
+            self.ser.write(binarydata) #output format is "254,x,y,openess,255"
             time.sleep(sleeptime)
 
 

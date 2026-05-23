@@ -33,8 +33,10 @@ class CAMERA:
         self.cap.set(3, self.width)
         self.cap.set(4, self.height)
         self.cap.set(10, self.brightness)
-    def startcam(self, invert = True):
+    def startcam(self, invert = True, rotate = False):
         works, img = self.cap.read()
+        if(rotate):
+            img = cv2.rotate(img, cv2.ROTATE_180)
         if invert:
             img = cv2.flip(img,1)
             return works, img

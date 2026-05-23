@@ -44,7 +44,7 @@ def main():
 
     while True:
         fp = fps.get()
-        works, img = cam.startcam()
+        works, img = cam.startcam(rotate=True)
         if not works: break
 
         lip_points = lips_det.getpoints(img,True,True)
@@ -64,7 +64,7 @@ def main():
             l_x,l_y=centolipdist((c_x,c_y),mouth_coord)# return the coords of openmouth from the center cross
             #==================================================================================================================================
 
-            serial.serialOutput(l_x,l_y,0.01)#serial output to arduino via uart
+            serial.serialOutput(l_x-70,l_y-105,predictions[0],0.01)#serial output to arduino via uart
             print(serial.serialInput())
         #==================================================================================================================================
 
