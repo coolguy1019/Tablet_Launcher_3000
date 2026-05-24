@@ -16,13 +16,25 @@ def cam_center(img,width,height,draw=True,color=(0,0,0), thickness = 1):#draws c
     return width/2, height/2
 
 
-def centolipdist(center, lip, dis = False):
+def centolipdist(center, lip,steps=True ,dis = False):
     del_x = -(center[0] - lip[0]) #to make it according to the cartesian system.. forgot to update before.
     del_y = (center[1] - lip[1])
     dist = sqrt((del_x**2) + (del_y**2))
+    x_veiwing_angle = 81.14
+    y_veiwing_angle = 45.61
+    degreesperpixel_x = x_veiwing_angle/640
+    degreesperpixel_y = y_veiwing_angle/480
+    degreeperstep = 360/1000
     if dis:
-        return dist
-    return int(del_x), int(del_y)
+        return dist,int(del_x),int(del_y)
+    if(steps):
+        x_step = int((del_x*degreesperpixel_x)/degreeperstep)
+        y_step = int((del_y*degreesperpixel_y)/degreeperstep)
+        return x_step,y_step
+    else:
+        return int(del_x), int(del_y)
+
+
 
 def main():
     fps = mn.FPS()
@@ -44,7 +56,7 @@ def main():
 
     while True:
         fp = fps.get()
-        works, img = cam.startcam(rotate=True)
+        works, img = cam.startcam(rotate=False)
         if not works: break
 
         lip_points = lips_det.getpoints(img,True,True)
@@ -64,7 +76,7 @@ def main():
             l_x,l_y=centolipdist((c_x,c_y),mouth_coord)# return the coords of openmouth from the center cross
             #==================================================================================================================================
 
-            serial.serialOutput(l_x-70,l_y-105,predictions[0],0.01)#serial output to arduino via uart
+            serial.serialOutput(l_x,l_y,predictions[0],0.01)#serial output to arduino via uart
             print(serial.serialInput())
         #==================================================================================================================================
 
@@ -85,3 +97,6 @@ def main():
     #============================================
 
 if __name__ == '__main__': main()
+
+
+

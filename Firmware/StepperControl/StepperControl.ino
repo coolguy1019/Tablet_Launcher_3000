@@ -1,16 +1,11 @@
 #include <AccelStepper.h>
 
-int16_t x_coord{0},y_coord{0};
+int16_t c_stepsToMove_x{0},c_stepsToMove_y{0};
+int16_t p_stepsToMove_x{0},p_stepsToMove_y{0};
+int xacc{0};
+int yacc{0};
 uint8_t openess{0};
-int xcurrent{0};
-int xprevious{0};
-int ycurrent{0};
-int yprevious{0};
-int shot{0};
 
-unsigned long currt;
-unsigned long elapsed_time;
-unsigned long prevt;
 
 
 #define Y_STEP_PIN 2
@@ -32,12 +27,12 @@ void setup() {
 
   // Configure X axis
   xStepper.setMaxSpeed(4000);
- 
+  xStepper.setAcceleration(500);
   
 
   // Configure Y Axis
   yStepper.setMaxSpeed(4000);
-  
+  yStepper.setAcceleration(500);
 
   xStepper.setMinPulseWidth(2);
   yStepper.setMinPulseWidth(2);
@@ -66,81 +61,106 @@ bool coord_retriever(int16_t &x, int16_t &y, uint8_t &openess){
 }
 
 
-
 void loop() {
   
 // just test code to test the serial communication.
 
-  if(openess == 0){
-    digitalWrite(12,HIGH);
-  }
  
   
-  if(coord_retriever(x_coord,y_coord,openess)){
-    
+  if(coord_retriever(c_stepsToMove_x,c_stepsToMove_y,openess)){
+
+    c_stepsToMove_y = c_stepsToMove_y + (c_stepsToMove_y - p_stepsToMove_y)*0.02;
+    c_stepsToMove_x = c_stepsToMove_x + (c_stepsToMove_x - p_stepsToMove_x)*0.02;
      // if if statment is not used the initial values of x and y can be used causing errors
-    /*
-      Serial.print(x_coord);
-      Serial.print(" ");
-      Serial.print(y_coord);
-      Serial.print(" ");
-      Serial.println(openess);
- */
+    
+      //Serial.print(c_stepsToMove_x);
+      //Serial.print(" ");
+      //Serial.print(c_stepsToMove_y);
+      //Serial.print(" ");
+      //Serial.println(openess);
+
+ 
+
+
+
+
 //=================================================================================================================================
-  
-  if(abs(x_coord)>5 && abs(x_coord)<50){
-    xStepper.setSpeed(x_coord);
-    xStepper.runSpeed();
-    if(openess==1){
-      
-      
-      digitalWrite(12,LOW);
-      delay(100);
-      
-      
+
+  if(abs(c_stepsToMove_x)>5 && abs(c_stepsToMove_x)<90){
+    if(xacc != 100){
+    xStepper.setAcceleration(50);
+    xacc =100;
     }
-    
-    
-  
-  }else if(abs(x_coord)<=5 && abs(x_coord)>=0){
-    
-  }else{
-    xcurrent = x_coord/abs(x_coord);
-    if(xcurrent != xprevious && xcurrent ==1){
-    xStepper.setSpeed(4000);
-    xprevious = xcurrent;
-    }else if(xcurrent != xprevious && xcurrent ==-1){
-      xStepper.setSpeed(-4000);
-      xprevious = xcurrent;
+    if(xStepper.distanceToGo() == 0){ 
+      xStepper.move(c_stepsToMove_x);
     }
-    xStepper.runSpeed();
   }
   
-  if(abs(y_coord)>5 && abs(y_coord)<50){
-    yStepper.setSpeed(y_coord);
-    yStepper.runSpeed();
-    
-    
-  }else if(abs(y_coord)<=5 && abs(y_coord)>=0){
-    
-    
-    }else{
-    ycurrent = y_coord/abs(y_coord);;
-    if(ycurrent != yprevious && ycurrent ==1){
-    yStepper.setSpeed(4000);
-    yprevious = ycurrent;
-    }else if(ycurrent != yprevious && ycurrent ==-1){
-      yStepper.setSpeed(-4000);
-      yprevious = ycurrent;
+  else if(abs(c_stepsToMove_x)>=0 && abs(c_stepsToMove_x)<=5){}
+
+  else{
+    if(xacc != 1000){
+    xStepper.setAcceleration(1000);
+    xacc = 1000;
     }
-    yStepper.runSpeed();
+    if(xStepper.distanceToGo() == 0){ 
+      xStepper.move(c_stepsToMove_x);
+    }
   }
 
-  }else{
-    digitalWrite(12,HIGH);
+
+
+    if(abs(c_stepsToMove_y)>5 && abs(c_stepsToMove_y)<90){
+    if(yacc != 100){
+    yStepper.setAcceleration(50);
+    yacc = 100;
+    }
+    if(yStepper.distanceToGo() == 0){ 
+      yStepper.move(c_stepsToMove_y);
+    }
   }
   
-}
+  else if(abs(c_stepsToMove_y)>=0 && abs(c_stepsToMove_y)<=5){}
+
+  else{
+    if(yacc != 1000){
+    yStepper.setAcceleration(1000);
+    yacc = 1000;
+    }
+    if(yStepper.distanceToGo() == 0){ 
+      yStepper.move(c_stepsToMove_y);
+    }
+  }
+  }
+
+  
+  
+  
+
+
+
+
+  
+xStepper.run();
+yStepper.run();
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
