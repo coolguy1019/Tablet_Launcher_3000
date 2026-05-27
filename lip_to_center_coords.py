@@ -24,7 +24,7 @@ def centolipdist(center, lip,steps=True ,dis = False):
     y_veiwing_angle = 45.61
     degreesperpixel_x = x_veiwing_angle/640
     degreesperpixel_y = y_veiwing_angle/480
-    degreeperstep = 360/1000
+    degreeperstep = 360/800
     if dis:
         return dist,int(del_x),int(del_y)
     if(steps):
