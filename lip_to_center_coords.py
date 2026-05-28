@@ -1,4 +1,3 @@
-from math import sqrt
 import face_landmarks as mn
 import cv2
 import pickle
@@ -16,24 +15,65 @@ def cam_center(img,width,height,draw=True,color=(0,0,0), thickness = 1):#draws c
     return width/2, height/2
 
 
-def centolipdist(center, lip,steps=True ,dis = False):
+def centerToLipCoords(center, lip):
     del_x = -(center[0] - lip[0]) #to make it according to the cartesian system.. forgot to update before.
     del_y = (center[1] - lip[1])
-    dist = sqrt((del_x**2) + (del_y**2))
-    x_veiwing_angle = 81.14
-    y_veiwing_angle = 45.61
-    degreesperpixel_x = x_veiwing_angle/640
-    degreesperpixel_y = y_veiwing_angle/480
-    degreeperstep = 360/800
-    if dis:
-        return dist,int(del_x),int(del_y)
-    if(steps):
-        x_step = int((del_x*degreesperpixel_x)/degreeperstep)
-        y_step = int((del_y*degreesperpixel_y)/degreeperstep)
-        return x_step,y_step
-    else:
-        return int(del_x), int(del_y)
+    return int(del_x), int(del_y)
 
+def errorToSteps(x_error, y_error):
+    x_veiwing_angle = 81.14 #viewing angles of camera
+    y_veiwing_angle = 45.61
+    degreesperpixel_x = x_veiwing_angle / 640 #resolution of camera
+    degreesperpixel_y = y_veiwing_angle / 480
+    degreeperstep = 360 / 800 #quater microstepping..(200*4)
+
+    x_step = int((x_error * degreesperpixel_x) / degreeperstep)
+    y_step = int((y_error * degreesperpixel_y) / degreeperstep)
+    return x_step, y_step
+
+#=====================================================================================
+#defined outside since they need to remember.
+x_prevError =0#error one frame ago
+y_prevError =0
+x_integral  =0
+y_integral  =0
+x_errorFiltered =0
+y_errorFiltered =0
+def PID(x_error, y_error,kp,kd,ki,fps):
+    global x_prevError
+    global y_prevError
+    global x_integral
+    global y_integral
+    global x_errorFiltered
+    global y_errorFiltered
+
+    #==============================================
+    #only take integral when the error small but if error is too small then ignore.
+    if(abs(x_error)<50 and abs(x_error)>=10):
+        x_integral += x_error
+    elif(abs(x_error) <10):
+        x_integral =0
+    if(abs(y_error)<50 and abs(y_error)>=10):
+        y_integral += y_error
+    elif(abs(y_error) <10):
+        y_integral =0
+    #====================================================
+    #for derivative term the time between 2 frames.
+    dt = max(fps.elapsed,0.005)
+    #exponenetial moving average for smoothening.
+    a = 0.05
+    x_errorFiltered = x_errorFiltered*a + x_error*(1-a)
+    y_errorFiltered = y_errorFiltered*a + y_error*(1-a)
+    x_derivative = float(x_error - x_prevError)/dt
+    y_derivative = float(y_error - y_prevError)/dt
+    #====================================================
+    x_prevError = x_error
+    y_prevError = y_error
+
+    x_output = x_error*kp + x_derivative*kd + x_integral*ki  #PID output
+    y_output = y_error*kp + y_derivative*kd + y_integral*ki
+
+    return x_output,y_output
 
 
 def main():
@@ -73,11 +113,14 @@ def main():
             cv2.circle(img,mouth_coord,3,(0,0,0),-1)
             #==================================================================================================================================
             c_x,c_y = cam_center(img,cam.width,cam.height) #draws crosshairs and returns centerpoint coords of the camera
-            l_x,l_y=centolipdist((c_x,c_y),mouth_coord)# return the coords of openmouth from the center cross
+            x_error,y_error = centerToLipCoords((c_x,c_y),mouth_coord)# return the coords of openmouth from the center cross
+            x_corrected_error,y_corrected_error = PID(x_error,y_error,0.5,0.015,0,fps)
+            x_step,y_step = errorToSteps(x_corrected_error,y_corrected_error)
+            print(x_step,y_step,"   ",x_error,y_error)
             #==================================================================================================================================
 
-            serial.serialOutput(l_x,l_y,predictions[0],0.01)#serial output to arduino via uart
-            print(serial.serialInput())
+            serial.serialOutput(x_step,y_step,predictions[0],0.01)#serial output to arduino via uart
+            #print(serial.serialInput())
         #==================================================================================================================================
 
         key = cv2.waitKey(1)

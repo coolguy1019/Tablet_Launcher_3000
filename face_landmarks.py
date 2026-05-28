@@ -11,9 +11,9 @@ class FPS:
         self.start = time.time()
     def get(self):
         curt = time.time()
-        elapsed = curt - self.start
+        self.elapsed = curt - self.start
         self.start =  curt
-        self.fr = int(1/elapsed) if elapsed > 0 else 0
+        self.fr = int(1/self.elapsed) if self.elapsed > 0 else 0
         self.sumfr += self.fr
         self.i += 1
         return self.fr
